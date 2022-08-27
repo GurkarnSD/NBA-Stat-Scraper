@@ -1,1 +1,1 @@
-# NBA-Web-Scraper
+# NBA-Stat-Scraper
