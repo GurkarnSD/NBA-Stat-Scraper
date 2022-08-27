@@ -1,6 +1,8 @@
+from ftplib import error_perm
 from types import NoneType
 from bs4 import BeautifulSoup
 import requests
+import os
 
 def team_info_puller():
 
@@ -39,18 +41,61 @@ def team_info_puller():
                 case 'years_league_champion':
                     team_nbachamp = element.text
         with open(f'TeamStats/{team_name}.txt','w') as f:
-            f.write(team_name)
-            f.write('\n'+team_link)
-            f.write('\n'+team_startyear)
-            f.write('\n'+team_lifespan)
-            f.write('\n'+team_games)
-            f.write('\n'+team_wins)
-            f.write('\n'+team_losses)
-            f.write('\n'+team_wlp)
-            f.write('\n'+team_plyfs)
-            f.write('\n'+team_divchamp)
-            f.write('\n'+team_confchamp)
-            f.write('\n'+team_nbachamp)
+            f.write(team_name+'\n')
+            f.write(team_link+'\n')
+            f.write(team_startyear+'\n')
+            f.write(team_lifespan+'\n')
+            f.write(team_games+'\n')
+            f.write(team_wins+'\n')
+            f.write(team_losses+'\n')
+            f.write(team_wlp+'\n')
+            f.write(team_plyfs+'\n')
+            f.write(team_divchamp+'\n')
+            f.write(team_confchamp+'\n')
+            f.write(team_nbachamp+'\n')
+
+def team_season_info_puller():
+    for root, dirs, files in os.walk('TeamStats'):
+        for file in files:
+            with open(f'TeamStats/{file}', 'r') as f:
+                team_info = f.readlines()
+                team_name = team_info[0].strip()
+                team_link = team_info[1].strip()
+
+            team_page = requests.get(team_link).text
+            teamseasons_soup = BeautifulSoup(team_page, 'lxml')
+            seasons = teamseasons_soup.find('tbody').find_all('tr')
+            for season in seasons:
+                if season.get('class') != 'thead':
+                    season_info = season.find_all()
+                    for info in season_info:
+                        match (info.get('data-stat')):
+                            case 'season' :
+                                season_year = info.text
+                                season_link = 'https://www.basketball-reference.com' + info.a['href']
+                            case 'wins':
+                                season_wins = info.text
+                            case 'losses':
+                                season_losses = info.text
+                            case 'win_loss_pct':
+                                season_wlp = info.text
+                            case 'coaches':
+                                season_coach = info.text
+                    try: 
+                        os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{team_name}') 
+                    except OSError as error: 
+                        print()
+                    with open(f'Teams/{team_name}/{season_year}.txt', 'w') as f:
+                        f.write(season_year+'\n')
+                        f.write(season_link+'\n')
+                        f.write(season_wins+'\n')
+                        f.write(season_losses+'\n')
+                        f.write(season_wlp+'\n')
+                        f.write(season_coach+'\n')
+            
+
+
 
 if __name__ == '__main__':
     team_info_puller()
+    team_season_info_puller()
