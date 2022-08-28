@@ -40,7 +40,7 @@ def team_info_puller():
                     team_confchamp = element.text
                 case 'years_league_champion':
                     team_nbachamp = element.text
-        with open(f'TeamStats/{team_name}.txt','w') as f:
+        with open(f'TeamInfo/{team_name}.txt','w') as f:
             f.write(team_name+'\n')
             f.write(team_link+'\n')
             f.write(team_startyear+'\n')
@@ -55,9 +55,9 @@ def team_info_puller():
             f.write(team_nbachamp+'\n')
 
 def team_season_info_puller():
-    for root, dirs, files in os.walk('TeamStats'):
+    for root, dirs, files in os.walk('TeamInfo'):
         for file in files:
-            with open(f'TeamStats/{file}', 'r') as f:
+            with open(f'TeamInfo/{file}', 'r') as f:
                 team_info = f.readlines()
                 team_name = team_info[0].strip()
                 team_link = team_info[1].strip()
@@ -82,19 +82,17 @@ def team_season_info_puller():
                             case 'coaches':
                                 season_coach = info.text
                     try: 
-                        os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{team_name}') 
+                        os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{team_name}')
+                        os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{team_name}/Seasons')
                     except OSError as error: 
                         print()
-                    with open(f'Teams/{team_name}/{season_year}.txt', 'w') as f:
+                    with open(f'Teams/{team_name}/Seasons/{season_year}.txt', 'w') as f:
                         f.write(season_year+'\n')
                         f.write(season_link+'\n')
                         f.write(season_wins+'\n')
                         f.write(season_losses+'\n')
                         f.write(season_wlp+'\n')
                         f.write(season_coach+'\n')
-            
-
-
 
 if __name__ == '__main__':
     team_info_puller()
