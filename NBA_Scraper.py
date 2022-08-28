@@ -3,6 +3,7 @@ from types import NoneType
 from bs4 import BeautifulSoup
 import requests
 import os
+from datetime import date
 
 def team_info_puller():
 
@@ -94,6 +95,53 @@ def team_season_info_puller():
                         f.write(season_wlp+'\n')
                         f.write(season_coach+'\n')
 
+def team_player_info_puller():
+    for dir in os.listdir('Teams'):
+        with open(f'Teams/{dir}/Seasons/{date.today().year}-{str(date.today().year + 1)[2:4]}.txt','r') as f:
+            season_info = f.readlines()
+            season_link = season_info[1].strip()
+
+        current_season_page = requests.get(season_link).text
+        current_season_soup = BeautifulSoup(current_season_page, 'lxml')
+        season_roster = current_season_soup.find('table',id='roster').find('tbody').find_all('tr')
+        
+        try: 
+            os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{dir}/Players')
+        except OSError as error: 
+            print()
+
+        for player in season_roster:
+            player_info = player.find_all()
+            for info in player_info:
+                match (info.get('data-stat')):
+                    case 'player':
+                        player_name = info.text
+                        player_link = 'https://www.basketball-reference.com' + info.a['href']
+                    case 'pos':
+                        player_pos = info.text
+                    case 'height':
+                        player_height = info.text
+                    case 'weight':
+                        player_weight = info.text
+                    case 'years_experience':
+                        player_yearsexp = info.text
+                    case 'college':
+                        player_college = info.text
+
+            try: 
+                os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{dir}/Players/{player_name}')
+            except OSError as error: 
+                print()
+
+            with open(f'Teams/{dir}/Players/{player_name}/{player_name}.txt', 'w', encoding='utf-8') as f:
+                print(player_name)
+                f.write(player_name + '\n')
+                f.write(player_link + '\n')
+                f.write(player_pos + '\n')
+                f.write(player_height + '\n')
+                f.write(player_weight + '\n')
+                f.write(player_yearsexp + '\n')
+                f.write(player_college + '\n')
+
 if __name__ == '__main__':
-    team_info_puller()
-    team_season_info_puller()
+    team_player_info_puller()
