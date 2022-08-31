@@ -1,4 +1,6 @@
 from ftplib import error_perm
+from multiprocessing.resource_sharer import stop
+import string
 from types import NoneType
 from bs4 import BeautifulSoup
 import requests
@@ -133,7 +135,10 @@ def team_player_info_puller():
             except OSError as error: 
                 print()
 
-            with open(f'Teams/{dir}/Players/{player_name}/{player_name}.txt', 'w', encoding='utf-8') as f:
+            # Avoid punctuation in txt file names
+            txt_filename = player_name.translate(str.maketrans('', '', string.punctuation))
+
+            with open(f'Teams/{dir}/Players/{player_name}/{txt_filename}.txt', 'w', encoding='utf-8') as f:
                 print(player_name)
                 f.write(player_name + '\n')
                 f.write(player_link + '\n')
@@ -143,5 +148,213 @@ def team_player_info_puller():
                 f.write(player_yearsexp + '\n')
                 f.write(player_college + '\n')
 
+def player_info_puller():
+    for dir in os.listdir('Teams'):
+        for player_name in os.listdir(f'Teams/{dir}/Players'):
+            txt_filename = player_name.translate(str.maketrans('', '', string.punctuation))
+            with open(f'Teams/{dir}/Players/{player_name}/{txt_filename}.txt', 'r', encoding='utf-8') as f:
+                player_info = f.readlines()
+                player_link = player_info[1]
+
+            player_page = requests.get(player_link.strip()).text
+            player_page_soup = BeautifulSoup(player_page, 'lxml')
+
+            seasonal_data_exists = True
+            playoff_data_exists = True
+
+            try:
+                seasonal_stats_table = player_page_soup.find('table', id='per_game').find('tbody').find_all('tr')
+            except AttributeError as error:
+                seasonal_data_exists = False
+
+            try:
+                playoff_stats_table = player_page_soup.find('table', id='playoffs_per_game').find('tbody').find_all('tr')
+            except AttributeError as error:
+                playoff_data_exists = False
+
+            try: 
+                os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{dir}/Players/{player_name}/Seasons')
+                os.mkdir(f'C:/Users/Gurkarn/Desktop/CS Projects/NBA Web Scraper/Teams/{dir}/Players/{player_name}/Playoffs')
+            except OSError as error: 
+                print()
+
+            if seasonal_data_exists:
+                for season in seasonal_stats_table:
+                    for stat in season.find_all():
+                        match (stat.get('data-stat')):
+                            case 'season':
+                                stat_season = stat.text
+                            case 'age':
+                                stat_age = stat.text
+                            case 'pos':
+                                stat_pos = stat.text
+                            case 'g':
+                                stat_g = stat.text
+                            case 'gs':
+                                stat_gs = stat.text
+                            case 'mp_per_g':
+                                stat_mp = stat.text
+                            case 'fg_per_g':
+                                stat_fg = stat.text
+                            case 'fga_per_g':
+                                stat_fga = stat.text
+                            case 'fg_pct':
+                                stat_fgpct = stat.text
+                            case 'fg3_per_g':
+                                stat_fg3 = stat.text
+                            case 'fg3a_per_g':
+                                stat_fg3a = stat.text
+                            case 'fg3_pct':
+                                stat_fg3pct = stat.text
+                            case 'fg2_per_g':
+                                stat_fg2 = stat.text
+                            case 'fg2a_per_g':
+                                stat_fg2a = stat.text
+                            case 'fg2_pct':
+                                stat_fg2pct = stat.text
+                            case 'efg_pct':
+                                stat_efg = stat.text
+                            case 'ft_per_g':
+                                stat_ft = stat.text
+                            case 'fta_per_g':
+                                stat_fta = stat.text
+                            case 'ft_pct':
+                                stat_ftpct = stat.text
+                            case 'orb_per_g':
+                                stat_orb = stat.text
+                            case 'drb_per_g':
+                                stat_drb = stat.text
+                            case 'trb_per_g':
+                                stat_trb = stat.text
+                            case 'ast_per_g':
+                                stat_ast = stat.text
+                            case 'stl_per_g':
+                                stat_stl = stat.text
+                            case 'blk_per_g':
+                                stat_blk = stat.text
+                            case 'tov_per_g':
+                                stat_tov = stat.text
+                            case 'pf_per_g':
+                                stat_pf = stat.text
+                            case 'pts_per_g':
+                                stat_pts = stat.text
+                    with open(f'Teams/{dir}/Players/{player_name}/Seasons/{stat_season}.txt', 'w', encoding='utf-8') as f:
+                        f.write(stat_season + '\n')
+                        f.write(stat_age + '\n')
+                        f.write(stat_pos + '\n')
+                        f.write(stat_g + '\n')
+                        f.write(stat_gs + '\n')
+                        f.write(stat_mp + '\n')
+                        f.write(stat_fg + '\n')
+                        f.write(stat_fga + '\n')
+                        f.write(stat_fgpct + '\n')
+                        f.write(stat_fg3 + '\n')
+                        f.write(stat_fg3a + '\n')
+                        f.write(stat_fg3pct + '\n')
+                        f.write(stat_fg2 + '\n')
+                        f.write(stat_fg2a + '\n')
+                        f.write(stat_fg2pct + '\n')
+                        f.write(stat_efg + '\n')
+                        f.write(stat_ft + '\n')
+                        f.write(stat_ftpct + '\n')
+                        f.write(stat_orb + '\n')
+                        f.write(stat_drb + '\n')
+                        f.write(stat_trb + '\n')
+                        f.write(stat_ast + '\n')
+                        f.write(stat_stl + '\n')
+                        f.write(stat_blk + '\n')
+                        f.write(stat_tov + '\n')
+                        f.write(stat_pf + '\n')
+                        f.write(stat_pts + '\n')
+
+            if playoff_data_exists:
+                for playoff in playoff_stats_table:
+                    for stat in playoff.find_all():
+                        match (stat.get('data-stat')):
+                            case 'season':
+                                stat_season = stat.text
+                            case 'age':
+                                stat_age = stat.text
+                            case 'pos':
+                                stat_pos = stat.text
+                            case 'g':
+                                stat_games = stat.text
+                            case 'gs':
+                                stat_gstarted = stat.text
+                            case 'mp_per_g':
+                                stat_mp = stat.text
+                            case 'fg_per_g':
+                                stat_fg = stat.text
+                            case 'fga_per_g':
+                                stat_fga = stat.text
+                            case 'fg_pct':
+                                stat_fgpct = stat.text
+                            case 'fg3_per_g':
+                                stat_fg3 = stat.text
+                            case 'fg3a_per_g':
+                                stat_fg3a = stat.text
+                            case 'fg3_pct':
+                                stat_fg3pct = stat.text
+                            case 'fg2_per_g':
+                                stat_fg2 = stat.text
+                            case 'fg2a_per_g':
+                                stat_fg2a = stat.text
+                            case 'fg2_pct':
+                                stat_fg2pct = stat.text
+                            case 'efg_pct':
+                                stat_efg = stat.text
+                            case 'ft_per_g':
+                                stat_ft = stat.text
+                            case 'fta_per_g':
+                                stat_fta = stat.text
+                            case 'ft_pct':
+                                stat_ftpct = stat.text
+                            case 'orb_per_g':
+                                stat_orb = stat.text
+                            case 'drb_per_g':
+                                stat_drb = stat.text
+                            case 'trb_per_g':
+                                stat_trb = stat.text
+                            case 'ast_per_g':
+                                stat_ast = stat.text
+                            case 'stl_per_g':
+                                stat_stl = stat.text
+                            case 'blk_per_g':
+                                stat_blk = stat.text
+                            case 'tov_per_g':
+                                stat_tov = stat.text
+                            case 'pf_per_g':
+                                stat_pf = stat.text
+                            case 'pts_per_g':
+                                stat_pts = stat.text
+                    with open(f'Teams/{dir}/Players/{player_name}/Playoffs/{stat_season}.txt', 'w', encoding='utf-8') as f:
+                        f.write(stat_season + '\n')
+                        f.write(stat_age + '\n')
+                        f.write(stat_pos + '\n')
+                        f.write(stat_g + '\n')
+                        f.write(stat_gs + '\n')
+                        f.write(stat_mp + '\n')
+                        f.write(stat_fg + '\n')
+                        f.write(stat_fga + '\n')
+                        f.write(stat_fgpct + '\n')
+                        f.write(stat_fg3 + '\n')
+                        f.write(stat_fg3a + '\n')
+                        f.write(stat_fg3pct + '\n')
+                        f.write(stat_fg2 + '\n')
+                        f.write(stat_fg2a + '\n')
+                        f.write(stat_fg2pct + '\n')
+                        f.write(stat_efg + '\n')
+                        f.write(stat_ft + '\n')
+                        f.write(stat_ftpct + '\n')
+                        f.write(stat_orb + '\n')
+                        f.write(stat_drb + '\n')
+                        f.write(stat_trb + '\n')
+                        f.write(stat_ast + '\n')
+                        f.write(stat_stl + '\n')
+                        f.write(stat_blk + '\n')
+                        f.write(stat_tov + '\n')
+                        f.write(stat_pf + '\n')
+                        f.write(stat_pts + '\n')
+
 if __name__ == '__main__':
-    team_player_info_puller()
+    player_info_puller()
