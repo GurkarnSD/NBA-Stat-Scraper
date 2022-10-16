@@ -24,8 +24,14 @@ def team_info_puller():
     for activeteam in activeteams_main:
         team_name = activeteam.find('th').text
         team_link = 'https://www.basketball-reference.com' + activeteam.find('th').a['href']
+
+        team_page = requests.get(team_link).text
+        team_soup = BeautifulSoup(team_page, 'lxml')
+        team_logo = team_soup.find(class_="teamlogo")['src']
+
         team_data = activeteam.find_all(class_='right')
         post = {}
+        post["team_logo"] = team_logo
         post["team_link"] = team_link
         
         for element in team_data:
@@ -107,7 +113,14 @@ def team_player_info_puller():
                 match (info.get('data-stat')):
                     case 'player':
                         post["player_name"] = info.text
-                        post["player_link"] = 'https://www.basketball-reference.com' + info.a['href']
+                        player_link = 'https://www.basketball-reference.com' + info.a['href']
+                        post["player_link"] = player_link
+                        player_page = requests.get(player_link.strip()).text
+                        player_page_soup = BeautifulSoup(player_page, 'lxml')
+                        try:
+                            post['player_img'] = player_page_soup.find(class_='media-item').img['src']
+                        except:
+                            post['player_img'] = 'NoImage'
                     case 'pos':
                         post["player_pos"] = info.text
                     case 'height':
@@ -284,6 +297,18 @@ def player_info_puller():
             filter = { "player_name": player_name}
             collection.update_one(filter, newvalues)            
 
+def drop_databases():
+    db_list = client.list_database_names()
+    for db in db_list:
+        try:
+            print("Dropping: ", db)
+            client.drop_database(db)
+        except:
+            print("Error")
 
 if __name__ == '__main__':
-    print(client)
+    drop_databases()
+    team_info_puller()
+    team_season_info_puller()
+    team_player_info_puller()
+    player_info_puller()
