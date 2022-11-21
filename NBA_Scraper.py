@@ -1,4 +1,3 @@
-import string
 from bs4 import BeautifulSoup
 import requests
 import os
@@ -6,6 +5,7 @@ from datetime import date
 import pymongo
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
+import time
 
 client = pymongo.MongoClient(os.getenv('MONGO_KEY'))
 TeamInfo = client["TeamInfo"]
@@ -22,6 +22,7 @@ def team_info_puller():
     activeteams_main = activeteams.find_all(class_='full_table')
 
     for activeteam in activeteams_main:
+        time.sleep(2.1)
         team_name = activeteam.find('th').text
         team_link = 'https://www.basketball-reference.com' + activeteam.find('th').a['href']
 
@@ -63,6 +64,7 @@ def team_info_puller():
 def team_season_info_puller():
     collections = TeamInfo.list_collection_names()
     for c in collections:
+        time.sleep(2.1)
         team_name = c
         team_info = TeamInfo.get_collection(c).find_one()
         team_link = team_info.get("team_link")
@@ -95,6 +97,7 @@ def team_season_info_puller():
 def team_player_info_puller():
     collections = TeamInfo.list_collection_names()
     for team_name in collections:
+        time.sleep(2.1)
         db = client[team_name.replace(" ", "")]
         collection = db["Seasons"]
         season = f"{date.today().year}-{str(date.today().year + 1)[2:4]}"
@@ -112,6 +115,7 @@ def team_player_info_puller():
             for info in player_info:
                 match (info.get('data-stat')):
                     case 'player':
+                        time.sleep(2.1)
                         post["player_name"] = info.text
                         player_link = 'https://www.basketball-reference.com' + info.a['href']
                         post["player_link"] = player_link
@@ -140,6 +144,7 @@ def player_info_puller():
         db = client[team_name.replace(" ", "")]
         collection = db.Players.find()
         for player_info in collection:
+            players += 1
             player_name = player_info.get("player_name")
             player_link = player_info.get("player_link")
 
@@ -295,9 +300,16 @@ def player_info_puller():
             
             newvalues = { "$set": player_info}
             filter = { "player_name": player_name}
-            collection.update_one(filter, newvalues)            
+            collection.update_one(filter, newvalues)        
 
 def drop_databases():
+    db_list = client.list_database_names()
+    for db in db_list:
+        try:
+            print("Dropping: ", db)
+            client.drop_database(db)
+        except:
+            print("Error")
     db_list = client.list_database_names()
     for db in db_list:
         try:
