@@ -21,9 +21,14 @@ def team_info_puller():
 
     activeteams_main = activeteams.find_all(class_='full_table')
 
+    player_db = client["Requests"]
+    team_names = player_db["Teams"]
+    names = {}
+
     for activeteam in activeteams_main:
         time.sleep(2.1)
         team_name = activeteam.find('th').text
+        names[team_name.lower()] = team_name.replace(" ","")
         team_link = 'https://www.basketball-reference.com' + activeteam.find('th').a['href']
 
         team_page = requests.get(team_link).text
@@ -58,8 +63,11 @@ def team_info_puller():
                 case 'years_league_champion':
                     post["team_nbachamp"] = element.text
         
+        post['team_name'] = team_name
+        team_name = team_name.replace(" ","")
         collection = TeamInfo[f"{team_name}"]
         collection.insert_one(post)
+    team_names.insert_one(names)
 
 def team_season_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -96,6 +104,10 @@ def team_season_info_puller():
 
 def team_player_info_puller():
     collections = TeamInfo.list_collection_names()
+    player_db = client["Requests"]
+    player_names = player_db["Names"]
+    names = {}
+
     for team_name in collections:
         time.sleep(2.1)
         db = client[team_name.replace(" ", "")]
@@ -115,6 +127,7 @@ def team_player_info_puller():
             for info in player_info:
                 match (info.get('data-stat')):
                     case 'player':
+                        names[info.text.lower()] = info.text
                         time.sleep(2.1)
                         post["player_name"] = info.text
                         player_link = 'https://www.basketball-reference.com' + info.a['href']
@@ -124,7 +137,7 @@ def team_player_info_puller():
                         try:
                             post['player_img'] = player_page_soup.find(class_='media-item').img['src']
                         except:
-                            post['player_img'] = 'NoImage'
+                            post['player_img'] = 'https://logocdn.com/nba/'
                     case 'pos':
                         post["player_pos"] = info.text
                     case 'height':
@@ -134,18 +147,24 @@ def team_player_info_puller():
                     case 'years_experience':
                         post["player_yearsexp"] = info.text
                     case 'college':
-                        post["player_college"] = info.text
+                        if info.getText() == "":
+                            post["player_college"] = "N/A"
+                        else:
+                            post["player_college"] = info.getText()
 
             collection.insert_one(post)
+    player_names.insert_one(names)
 
 def player_info_puller():
     collections = TeamInfo.list_collection_names()
     for team_name in collections:
-        db = client[team_name.replace(" ", "")]
+        print(team_name)
+        db = client[team_name]
         collection = db.Players.find()
         for player_info in collection:
-            players += 1
+            time.sleep(2.1)
             player_name = player_info.get("player_name")
+            print(player_name)
             player_link = player_info.get("player_link")
 
             player_page = requests.get(player_link.strip()).text
