@@ -2,6 +2,8 @@
 
 The NBA Stat Bot allows you to quickly and conveniently access NBA Stats within your discord server.
 
+Add to your server - https://discord.com/api/oauth2/authorize?client_id=1016044577771237407&scope=applications.commands
+
 ## Commands
 ```javascript
 /player [playername]
