@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ApplicationCommandPermissionType } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
@@ -227,9 +227,9 @@ async function TeamInputChecker(teamname){
 async function PlayerInputChecker(playername){
 	try {
 		await mongo_client.connect();
-		const Teams = await mongo_client.db('Requests').collection('Names').find().toArray();
+		const Names = await mongo_client.db('Requests').collection('Names').find().toArray();
 		var dict = {}
-		Teams.forEach((result) => {
+		Names.forEach((result) => {
 			dict = result
 		});
 		return dict[playername.toLowerCase()];
@@ -292,7 +292,6 @@ async function Player(playername) {
 				return;
 			}
 		  }));
-		
 		return returnPlayer;
 
     } catch (error) {
