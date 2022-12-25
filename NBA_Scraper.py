@@ -21,14 +21,14 @@ def team_info_puller():
 
     activeteams_main = activeteams.find_all(class_='full_table')
 
-    player_db = client["Requests"]
-    team_names = player_db["Teams"]
-    names = {}
+    #player_db = client["Requests"] Run If Databases Have Been Dropped
+    #team_names = player_db["Teams"] Run If Databases Have Been Dropped
+    #names = {} Run If Databases Have Been Dropped
 
     for activeteam in activeteams_main:
         time.sleep(2.1)
         team_name = activeteam.find('th').text
-        names[team_name.lower()] = team_name.replace(" ","")
+        #names[team_name.lower()] = team_name.replace(" ","") Run If Databases Have Been Dropped
         team_link = 'https://www.basketball-reference.com' + activeteam.find('th').a['href']
 
         team_page = requests.get(team_link).text
@@ -64,10 +64,14 @@ def team_info_puller():
                     post["team_nbachamp"] = element.text
         
         post['team_name'] = team_name
+        filter = {"team_name" : team_name}
         team_name = team_name.replace(" ","")
         collection = TeamInfo[f"{team_name}"]
-        collection.insert_one(post)
-    team_names.insert_one(names)
+
+        newvalues = { "$set": post }
+        collection.update_one(filter, newvalues)
+        #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
+    #team_names.insert_one(names) Run If Databases Have Been Dropped
 
 def team_season_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -100,7 +104,11 @@ def team_season_info_puller():
 
                 db = client[team_name.replace(" ", "")]
                 collection = db["Seasons"]
-                collection.insert_one(post)
+
+                filter = {}
+                newvalues = { "$set": post}
+                collection.update_one(filter, newvalues)
+                #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
 
 def team_player_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -127,9 +135,12 @@ def team_player_info_puller():
             for info in player_info:
                 match (info.get('data-stat')):
                     case 'player':
-                        names[info.text.lower()] = info.text
+                        name = info.text
+                        if (info.text.endswith("(TW)")):
+                            name = info.text[:-6]
+                        names[name.lower()] = name
                         time.sleep(2.1)
-                        post["player_name"] = info.text
+                        post["player_name"] = name
                         player_link = 'https://www.basketball-reference.com' + info.a['href']
                         post["player_link"] = player_link
                         player_page = requests.get(player_link.strip()).text
@@ -152,19 +163,24 @@ def team_player_info_puller():
                         else:
                             post["player_college"] = info.getText()
 
-            collection.insert_one(post)
-    player_names.insert_one(names)
+            newvalues = { "player_height": post['player_height'], "player_weight": post['player_weight'],
+            "player_yearsexp": post['player_yearsexp'], "player_img": post['player_img']}
+            filter = { "player_name": name}
+            collection.update_one(filter, newvalues)
+            #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
+    filter = {}
+    newvalues = { "$set": names}
+    player_names.update_one(filter, newvalues)
+    #player_names.insert_one(names) Run If Databases Have Been Dropped
 
 def player_info_puller():
     collections = TeamInfo.list_collection_names()
     for team_name in collections:
-        print(team_name)
         db = client[team_name]
         collection = db.Players.find()
         for player_info in collection:
             time.sleep(2.1)
             player_name = player_info.get("player_name")
-            print(player_name)
             player_link = player_info.get("player_link")
 
             player_page = requests.get(player_link.strip()).text
@@ -337,8 +353,8 @@ def drop_databases():
         except:
             print("Error")
 
-if __name__ == '__main__':
-    drop_databases()
+def data_update():
+
     team_info_puller()
     team_season_info_puller()
     team_player_info_puller()
