@@ -21,14 +21,14 @@ def team_info_puller():
 
     activeteams_main = activeteams.find_all(class_='full_table')
 
-    #player_db = client["Requests"] Run If Databases Have Been Dropped
-    #team_names = player_db["Teams"] Run If Databases Have Been Dropped
-    #names = {} Run If Databases Have Been Dropped
+    player_db = client["Requests"]
+    team_names = player_db["Teams"]
+    names = {}
 
     for activeteam in activeteams_main:
         time.sleep(2.1)
         team_name = activeteam.find('th').text
-        #names[team_name.lower()] = team_name.replace(" ","") Run If Databases Have Been Dropped
+        names[team_name.lower()] = team_name.replace(" ","")
         team_link = 'https://www.basketball-reference.com' + activeteam.find('th').a['href']
 
         team_page = requests.get(team_link).text
@@ -69,9 +69,11 @@ def team_info_puller():
         collection = TeamInfo[f"{team_name}"]
 
         newvalues = { "$set": post }
-        collection.update_one(filter, newvalues)
-        #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
-    #team_names.insert_one(names) Run If Databases Have Been Dropped
+        collection.update_one(filter, newvalues, True)
+
+    filter = {}
+    newvalues = { "$set": names}
+    team_names.update_one(filter, newvalues, True)
 
 def team_season_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -105,10 +107,9 @@ def team_season_info_puller():
                 db = client[team_name.replace(" ", "")]
                 collection = db["Seasons"]
 
-                filter = {}
+                filter = { 'season_year': post['season_year'] }
                 newvalues = { "$set": post}
-                collection.update_one(filter, newvalues)
-                #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
+                collection.update_one(filter, newvalues, True)
 
 def team_player_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -166,12 +167,11 @@ def team_player_info_puller():
             newvalues = { "player_height": post['player_height'], "player_weight": post['player_weight'],
             "player_yearsexp": post['player_yearsexp'], "player_img": post['player_img']}
             filter = { "player_name": name}
-            collection.update_one(filter, newvalues)
-            #collection.insert_one(post) Run If Databases Have Been Dropped - Comment Out Above Command
+            collection.update_one(filter, newvalues, True)
+
     filter = {}
     newvalues = { "$set": names}
-    player_names.update_one(filter, newvalues)
-    #player_names.insert_one(names) Run If Databases Have Been Dropped
+    player_names.update_one(filter, newvalues, True)
 
 def player_info_puller():
     collections = TeamInfo.list_collection_names()
@@ -354,8 +354,10 @@ def drop_databases():
             print("Error")
 
 def data_update():
-
     team_info_puller()
     team_season_info_puller()
     team_player_info_puller()
     player_info_puller()
+
+if __name__ == '__main__':
+    data_update()
